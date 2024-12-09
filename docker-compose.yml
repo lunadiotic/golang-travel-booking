@@ -1,0 +1,53 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: travel_postgres
+    environment:
+      POSTGRES_DB: travel_booking
+      POSTGRES_USER: travel_admin
+      POSTGRES_PASSWORD: travel_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U travel_admin -d travel_booking']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: travel_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: travel_admin
+      RABBITMQ_DEFAULT_PASS: travel_password
+    ports:
+      - '5672:5672' # AMQP port
+      - '15672:15672' # Management UI
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', 'check_port_connectivity']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: travel_redis
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
