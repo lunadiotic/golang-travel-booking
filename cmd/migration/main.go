@@ -2,9 +2,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/lunadiotic/golang-travel-booking/pkg/config"
 	"github.com/lunadiotic/golang-travel-booking/pkg/database"
@@ -12,9 +12,13 @@ import (
 
 func main() {
 	// Flag untuk menentukan action up atau down
-	var action string
-	flag.StringVar(&action, "action", "up", "migration action (up or down)")
-	flag.Parse()
+	if len(os.Args) < 3 {
+		log.Fatal("Usage: go run main.go migrate <up|down>")
+	}
+
+	action := os.Args[2] // Ambil "up" atau "down" dari argumen
+
+	fmt.Printf("Running migration %s\n", action)
 
 	// Load config
 	cfg, err := config.LoadConfig()
@@ -26,6 +30,10 @@ func main() {
 	db, err := database.NewPostgresDB(cfg)
 	if err != nil {
 		log.Fatal("Cannot connect to database:", err)
+	}
+
+	if err := database.TestConnection(db); err != nil {
+		log.Fatalf("Database connection failed: %v", err)
 	}
 
 	// Run Migration

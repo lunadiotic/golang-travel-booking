@@ -24,3 +24,11 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 
 	return db, nil
 }
+
+func TestConnection(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Ping()
+}
