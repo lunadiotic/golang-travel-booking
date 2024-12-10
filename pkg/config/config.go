@@ -21,8 +21,9 @@ type Config struct {
 	RedisHost string
 	RedisPort string
 
-	AppPort string
-	AppEnv  string
+	AppPort   string
+	AppEnv    string
+	JWTSecret string
 }
 
 func LoadConfig() (*Config, error) {
@@ -45,7 +46,8 @@ func LoadConfig() (*Config, error) {
 		RedisHost: os.Getenv("REDIS_HOST"),
 		RedisPort: os.Getenv("REDIS_PORT"),
 
-		AppPort: os.Getenv("APP_PORT"),
-		AppEnv:  os.Getenv("APP_ENV"),
+		AppPort:   os.Getenv("APP_PORT"),
+		AppEnv:    os.Getenv("APP_ENV"),
+		JWTSecret: os.Getenv("JWT_SECRET"),
 	}, nil
 }

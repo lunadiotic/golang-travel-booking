@@ -18,7 +18,9 @@ func NewRouter(userUseCase usecase.UserUseCase) *RouterConfig {
 	}
 }
 
-func (rc *RouterConfig) SetupRoutes(r *gin.Engine) {
+func (rc *RouterConfig) SetupRoutes(r *gin.Engine, jwtSecret string) {
+	r.Use(middleware.LoggingMiddleware())
+
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(rc.userUseCase)
 	userHandler := handler.NewUserHandler(rc.userUseCase)
@@ -35,9 +37,12 @@ func (rc *RouterConfig) SetupRoutes(r *gin.Engine) {
 		}
 	}
 
+	// Middleware
+	authMiddleware := middleware.AuthMiddleware(jwtSecret)
+
 	// Protected routes
 	protected := r.Group("/api/v1")
-	protected.Use(middleware.AuthMiddleware())
+	protected.Use(authMiddleware)
 	{
 		user := protected.Group("/users")
 		{

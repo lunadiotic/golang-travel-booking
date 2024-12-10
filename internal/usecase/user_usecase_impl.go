@@ -14,10 +14,10 @@ type userUseCase struct {
 	jwtSecret string // tambahkan ini
 }
 
-func NewUserUseCase(userRepo repository.UserRepository) *userUseCase {
+func NewUserUseCase(userRepo repository.UserRepository, jwtSecret string) *userUseCase {
 	return &userUseCase{
 		userRepo:  userRepo,
-		jwtSecret: "your-secret-key",
+		jwtSecret: jwtSecret,
 	}
 }
 

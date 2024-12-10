@@ -20,6 +20,7 @@ func TestUserUseCase_Register(t *testing.T) {
 		existingEmail = "existing@example.com"
 		validPassword = "password123"
 		fullName      = "Test User"
+		testJWTSecret = "test-secret-key"
 	)
 
 	// Helper function untuk membuat user baru
@@ -33,7 +34,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser(validEmail, validPassword, fullName)
 
@@ -47,7 +48,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Email Already Exists", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser(existingEmail, validPassword, fullName)
 		existingUser := &entity.User{ID: "existing-id"}
@@ -61,7 +62,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Empty Email", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser("", validPassword, fullName)
 
@@ -71,7 +72,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Empty Password", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser(validEmail, "", fullName)
 
@@ -81,7 +82,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Empty Full Name", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser(validEmail, validPassword, "")
 
@@ -92,7 +93,7 @@ func TestUserUseCase_Register(t *testing.T) {
 
 	t.Run("Repository Error", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := newTestUser(validEmail, validPassword, fullName)
 		dbError := errors.New("database error")
@@ -112,11 +113,12 @@ func TestUserUseCase_Login(t *testing.T) {
 		validPassword   = "password123"
 		invalidPassword = "wrongpassword"
 		testEmail       = "test@example.com"
+		testJWTSecret   = "test-secret-key"
 	)
 
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(validPassword), bcrypt.DefaultCost)
 		storedUser := &entity.User{
@@ -136,7 +138,7 @@ func TestUserUseCase_Login(t *testing.T) {
 
 	t.Run("Invalid Password", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(validPassword), bcrypt.DefaultCost)
 		storedUser := &entity.User{
@@ -157,7 +159,7 @@ func TestUserUseCase_Login(t *testing.T) {
 
 	t.Run("User Not Found", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		mockRepo.On("FindByEmail", "nonexistent@example.com").Return(nil, nil)
 
@@ -171,7 +173,7 @@ func TestUserUseCase_Login(t *testing.T) {
 
 	t.Run("Empty Email", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		token, user, err := useCase.Login("", validPassword)
 		assert.Error(t, err)
@@ -182,7 +184,7 @@ func TestUserUseCase_Login(t *testing.T) {
 
 	t.Run("Empty Password", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		token, user, err := useCase.Login(testEmail, "")
 		assert.Error(t, err)
@@ -193,7 +195,7 @@ func TestUserUseCase_Login(t *testing.T) {
 
 	t.Run("Repository Error", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		mockRepo.On("FindByEmail", testEmail).Return(nil, errors.New("database error"))
 
@@ -206,9 +208,11 @@ func TestUserUseCase_Login(t *testing.T) {
 }
 
 func TestUserUseCase_GetProfile(t *testing.T) {
+	const testJWTSecret = "test-secret-key"
+
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		expectedUser := &entity.User{
 			ID:       "user-123",
@@ -226,7 +230,7 @@ func TestUserUseCase_GetProfile(t *testing.T) {
 
 	t.Run("Empty ID", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user, err := useCase.GetProfile("")
 		assert.Error(t, err)
@@ -236,7 +240,7 @@ func TestUserUseCase_GetProfile(t *testing.T) {
 
 	t.Run("User Not Found", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		mockRepo.On("FindByID", "non-existent").Return(nil, nil)
 
@@ -249,7 +253,7 @@ func TestUserUseCase_GetProfile(t *testing.T) {
 
 	t.Run("Repository Error", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		dbError := errors.New("database error")
 		mockRepo.On("FindByID", "user-123").Return(nil, dbError)
@@ -263,9 +267,11 @@ func TestUserUseCase_GetProfile(t *testing.T) {
 }
 
 func TestUserUseCase_UpdateProfile(t *testing.T) {
+	const testJWTSecret = "test-secret-key"
+
 	t.Run("Success", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		existingUser := &entity.User{
 			ID:       "user-123",
@@ -290,7 +296,7 @@ func TestUserUseCase_UpdateProfile(t *testing.T) {
 
 	t.Run("Nil User", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		err := useCase.UpdateProfile(nil)
 		assert.Error(t, err)
@@ -299,7 +305,7 @@ func TestUserUseCase_UpdateProfile(t *testing.T) {
 
 	t.Run("Empty ID", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := &entity.User{
 			FullName: "Test User",
@@ -313,7 +319,7 @@ func TestUserUseCase_UpdateProfile(t *testing.T) {
 
 	t.Run("User Not Found", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := &entity.User{
 			ID:       "non-existent",
@@ -331,7 +337,7 @@ func TestUserUseCase_UpdateProfile(t *testing.T) {
 
 	t.Run("Repository Error on FindByID", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		user := &entity.User{
 			ID:       "user-123",
@@ -350,7 +356,7 @@ func TestUserUseCase_UpdateProfile(t *testing.T) {
 
 	t.Run("Repository Error on Update", func(t *testing.T) {
 		mockRepo := new(mocks.UserRepository)
-		useCase := usecase.NewUserUseCase(mockRepo)
+		useCase := usecase.NewUserUseCase(mockRepo, testJWTSecret)
 
 		existingUser := &entity.User{
 			ID:       "user-123",

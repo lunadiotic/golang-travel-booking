@@ -28,7 +28,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	// Setup UseCase dengan repository
-	userUseCase := usecase.NewUserUseCase(userRepo)
+	userUseCase := usecase.NewUserUseCase(userRepo, cfg.JWTSecret)
 
 	// Setup Router
 	router := route.NewRouter(userUseCase)
@@ -37,7 +37,7 @@ func main() {
 	r := gin.Default()
 
 	// Setup routes
-	router.SetupRoutes(r)
+	router.SetupRoutes(r, cfg.JWTSecret)
 
 	// Run server
 	if err := r.Run(":" + cfg.AppPort); err != nil {

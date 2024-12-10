@@ -1,4 +1,3 @@
-// pkg/middleware/auth_test.go
 package middleware
 
 import (
@@ -12,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testJWTSecret = "test-secret-key"
+
 func TestAuthMiddleware(t *testing.T) {
 	// Setup
 	gin.SetMode(gin.TestMode)
@@ -23,17 +24,17 @@ func TestAuthMiddleware(t *testing.T) {
 			"email":   "test@example.com",
 			"exp":     time.Now().Add(time.Hour * 24).Unix(),
 		})
-		tokenString, err := token.SignedString([]byte(jwtSecret))
+		tokenString, err := token.SignedString([]byte(testJWTSecret))
 		assert.NoError(t, err)
 
 		// Setup request
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
-		r.Use(AuthMiddleware())
+		r.Use(AuthMiddleware(testJWTSecret))
 		r.GET("/test", func(c *gin.Context) {
-			userId, exists := c.Get("user_id")
+			userID, exists := c.Get("user_id")
 			assert.True(t, exists)
-			assert.Equal(t, "test-user-id", userId)
+			assert.Equal(t, "test-user-id", userID)
 			c.Status(http.StatusOK)
 		})
 
@@ -49,7 +50,7 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("Missing Authorization Header", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
-		r.Use(AuthMiddleware())
+		r.Use(AuthMiddleware(testJWTSecret))
 		r.GET("/test", func(c *gin.Context) {
 			t.Error("Handler should not be called")
 		})
@@ -64,7 +65,7 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("Invalid Token Format", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
-		r.Use(AuthMiddleware())
+		r.Use(AuthMiddleware(testJWTSecret))
 		r.GET("/test", func(c *gin.Context) {
 			t.Error("Handler should not be called")
 		})
@@ -80,7 +81,7 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("Invalid Token", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
-		r.Use(AuthMiddleware())
+		r.Use(AuthMiddleware(testJWTSecret))
 		r.GET("/test", func(c *gin.Context) {
 			t.Error("Handler should not be called")
 		})
@@ -100,12 +101,12 @@ func TestAuthMiddleware(t *testing.T) {
 			"email":   "test@example.com",
 			"exp":     time.Now().Add(-time.Hour).Unix(), // expired 1 hour ago
 		})
-		tokenString, err := token.SignedString([]byte(jwtSecret))
+		tokenString, err := token.SignedString([]byte(testJWTSecret))
 		assert.NoError(t, err)
 
 		w := httptest.NewRecorder()
 		c, r := gin.CreateTestContext(w)
-		r.Use(AuthMiddleware())
+		r.Use(AuthMiddleware(testJWTSecret))
 		r.GET("/test", func(c *gin.Context) {
 			t.Error("Handler should not be called")
 		})
