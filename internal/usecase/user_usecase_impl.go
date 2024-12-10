@@ -95,11 +95,37 @@ func (u *userUseCase) Login(email, password string) (string, *entity.User, error
 }
 
 func (u *userUseCase) GetProfile(id string) (*entity.User, error) {
-	// Implementasi get profile
-	return u.userRepo.FindByID(id)
+	if id == "" {
+		return nil, ErrInvalidInput
+	}
+
+	user, err := u.userRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+
+	return user, nil
 }
 
 func (u *userUseCase) UpdateProfile(user *entity.User) error {
-	// Implementasi update profile
-	return u.userRepo.Update(user)
+	if user == nil || user.ID == "" {
+		return ErrInvalidInput
+	}
+
+	existingUser, err := u.userRepo.FindByID(user.ID)
+	if err != nil {
+		return err
+	}
+	if existingUser == nil {
+		return ErrUserNotFound
+	}
+
+	// Update only allowed fields
+	existingUser.FullName = user.FullName
+	existingUser.Phone = user.Phone
+
+	return u.userRepo.Update(existingUser)
 }

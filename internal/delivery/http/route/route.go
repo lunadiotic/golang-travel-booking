@@ -2,11 +2,10 @@
 package route
 
 import (
-	"github.com/lunadiotic/golang-travel-booking/internal/domain/usecase"
-
-	"github.com/lunadiotic/golang-travel-booking/internal/delivery/http/handler"
-
 	"github.com/gin-gonic/gin"
+	"github.com/lunadiotic/golang-travel-booking/internal/delivery/http/handler"
+	"github.com/lunadiotic/golang-travel-booking/internal/domain/usecase"
+	"github.com/lunadiotic/golang-travel-booking/pkg/middleware"
 )
 
 type RouterConfig struct {
@@ -38,7 +37,7 @@ func (rc *RouterConfig) SetupRoutes(r *gin.Engine) {
 
 	// Protected routes
 	protected := r.Group("/api/v1")
-	// protected.Use(middleware.AuthMiddleware())
+	protected.Use(middleware.AuthMiddleware())
 	{
 		user := protected.Group("/users")
 		{

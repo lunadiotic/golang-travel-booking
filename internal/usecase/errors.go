@@ -7,4 +7,6 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidInput       = errors.New("invalid input")
 	ErrTokenGeneration    = errors.New("failed to generate token")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrDatabaseError      = errors.New("database error occurred")
 )
