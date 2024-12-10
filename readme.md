@@ -46,7 +46,7 @@ The project follows a clean architecture approach with the following directories
 1. Clone the repository:
 
 ```
-git clone https://github.com/your-username/golang-travel-booking.git
+git clone https://github.com/lunadiotic/golang-travel-booking.git
 ```
 
 2. Change to the project directory:
