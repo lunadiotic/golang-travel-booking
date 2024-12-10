@@ -1,22 +1,32 @@
 package usecase
 
 import (
+	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/lunadiotic/golang-travel-booking/internal/domain/entity"
 	"github.com/lunadiotic/golang-travel-booking/internal/domain/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type userUseCase struct {
-	userRepo repository.UserRepository
+	userRepo  repository.UserRepository
+	jwtSecret string // tambahkan ini
 }
 
 func NewUserUseCase(userRepo repository.UserRepository) *userUseCase {
 	return &userUseCase{
-		userRepo: userRepo,
+		userRepo:  userRepo,
+		jwtSecret: "your-secret-key",
 	}
 }
 
 func (u *userUseCase) Register(user *entity.User) error {
+	// Validasi input
+	if user.Email == "" || user.Password == "" || user.FullName == "" {
+		return ErrInvalidInput
+	}
+
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -33,9 +43,55 @@ func (u *userUseCase) Register(user *entity.User) error {
 	return u.userRepo.Create(user)
 }
 
-func (u *userUseCase) Login(email, password string) (string, error) {
-	// Implementasi login
-	return "", nil
+func (u *userUseCase) generateToken(user *entity.User) (string, error) {
+	if user == nil {
+		return "", ErrTokenGeneration
+	}
+
+	// Validasi ID user
+	if user.ID == "" {
+		return "", ErrTokenGeneration
+	}
+
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"email":   user.Email,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(u.jwtSecret))
+	if err != nil {
+		return "", ErrTokenGeneration
+	}
+
+	return tokenString, nil
+}
+
+func (u *userUseCase) Login(email, password string) (string, *entity.User, error) {
+	if email == "" || password == "" {
+		return "", nil, ErrInvalidInput
+	}
+
+	user, err := u.userRepo.FindByEmail(email)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if user == nil {
+		return "", nil, ErrInvalidCredentials
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return "", nil, ErrInvalidCredentials
+	}
+
+	token, err := u.generateToken(user)
+	if err != nil {
+		return "", nil, err // Gunakan error dari generateToken
+	}
+
+	return token, user, nil
 }
 
 func (u *userUseCase) GetProfile(id string) (*entity.User, error) {

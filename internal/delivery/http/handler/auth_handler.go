@@ -1,4 +1,3 @@
-// internal/delivery/http/handler/auth_handler.go
 package handler
 
 import (
@@ -56,8 +55,24 @@ func (h *AuthHandler) Register(c *gin.Context) {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	// Implementasi login
-	c.JSON(200, gin.H{
-		"message": "Login endpoint",
+	var req dto.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, user, err := h.userUseCase.Login(req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.LoginResponse{
+		Token: token,
+		User: dto.UserResponse{
+			ID:       user.ID,
+			Email:    user.Email,
+			FullName: user.FullName,
+		},
 	})
 }
