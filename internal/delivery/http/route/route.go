@@ -9,12 +9,14 @@ import (
 )
 
 type RouterConfig struct {
-	userUseCase usecase.UserUseCase
+	userUseCase        usecase.UserUseCase
+	destinationUseCase usecase.DestinationUseCase
 }
 
-func NewRouter(userUseCase usecase.UserUseCase) *RouterConfig {
+func NewRouter(userUseCase usecase.UserUseCase, destinationUseCase usecase.DestinationUseCase) *RouterConfig {
 	return &RouterConfig{
-		userUseCase: userUseCase,
+		userUseCase:        userUseCase,
+		destinationUseCase: destinationUseCase,
 	}
 }
 
@@ -24,6 +26,7 @@ func (rc *RouterConfig) SetupRoutes(r *gin.Engine, jwtSecret string) {
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(rc.userUseCase)
 	userHandler := handler.NewUserHandler(rc.userUseCase)
+	destinationHandler := handler.NewDestinationHandler(rc.destinationUseCase)
 
 	// Public routes
 	public := r.Group("/api/v1")
@@ -34,6 +37,12 @@ func (rc *RouterConfig) SetupRoutes(r *gin.Engine, jwtSecret string) {
 		{
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
+		}
+
+		destinations := public.Group("/destinations")
+		{
+			destinations.GET("", destinationHandler.GetAll)
+			destinations.GET("/:id", destinationHandler.GetByID)
 		}
 	}
 
@@ -48,6 +57,13 @@ func (rc *RouterConfig) SetupRoutes(r *gin.Engine, jwtSecret string) {
 		{
 			user.GET("/profile", userHandler.GetProfile)
 			user.PUT("/profile", userHandler.UpdateProfile)
+		}
+
+		destinations := protected.Group("/destinations")
+		{
+			destinations.POST("", destinationHandler.Create)
+			destinations.PUT("/:id", destinationHandler.Update)
+			destinations.DELETE("/:id", destinationHandler.Delete)
 		}
 	}
 }

@@ -26,12 +26,14 @@ func main() {
 
 	// Setup Repository
 	userRepo := repository.NewUserRepository(db)
+	destinationRepo := repository.NewDestinationRepository(db)
 
 	// Setup UseCase dengan repository
 	userUseCase := usecase.NewUserUseCase(userRepo, cfg.JWTSecret)
+	destinationUseCase := usecase.NewDestinationUseCase(destinationRepo)
 
 	// Setup Router
-	router := route.NewRouter(userUseCase)
+	router := route.NewRouter(userUseCase, destinationUseCase)
 
 	// Setup Gin
 	r := gin.Default()
