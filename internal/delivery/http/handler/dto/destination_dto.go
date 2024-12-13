@@ -15,6 +15,7 @@ type UpdateDestinationRequest struct {
 	Province    string `json:"province" binding:"required"`
 	Description string `json:"description"`
 	ImageURL    string `json:"image_url"`
+	IsActive    bool   `json:"is_active"`
 }
 
 type DestinationResponse struct {
